@@ -3,8 +3,8 @@
 #include "esp_camera.h"
 
 /* ==== WIFI ==== */
-const char *ssid = "THEGIOIBAOLA.";
-const char *password = "thegioibaola";
+const char *ssid = "Manh Hung";
+const char *password = "a12345678";
 // const char *ssid = "Xiaomi 17T";
 // const char *password = "44448888";
 
@@ -31,7 +31,7 @@ const char *password = "thegioibaola";
 WebServer server(80);
 
 /* ==== STREAM SERVER ==== */
-// WiFiServer streamServer(81);
+WiFiServer streamServer(81);
 
 void handleCapture()
 {
@@ -69,37 +69,43 @@ void handleCapture()
 }
 
 /* ===== STREAM MJPEG ===== */
-// void streamTask()
-// {
-//   WiFiClient client = streamServer.available();
-//   if (!client)
-//     return;
-//
-//   Serial.println("MJPEG Stream connected!");
-//
-//   client.println("HTTP/1.1 200 OK");
-//   client.println("Content-Type: multipart/x-mixed-replace; boundary=frame");
-//   client.println();
-//
-//   while (client.connected())
-//   {
-//     camera_fb_t *fb = esp_camera_fb_get();
-//     if (!fb)
-//       continue;
-//
-//     client.printf("--frame\r\n");
-//     client.printf("Content-Type: image/jpeg\r\n");
-//     client.printf("Content-Length: %d\r\n\r\n", fb->len);
-//     client.write(fb->buf, fb->len);
-//     client.printf("\r\n");
-//
-//     esp_camera_fb_return(fb);
-//
-//     delay(30); // FPS ~ 30
-//   }
-//
-//   Serial.println("MJPEG Stream disconnected!");
-// }
+void streamTask()
+{
+  WiFiClient client = streamServer.available();
+  if (!client)
+    return;
+
+  Serial.println("MJPEG Stream connected!");
+
+  /* Send HTTP response headers. */
+  client.printf("HTTP/1.1 200 OK\r\n"
+                "Content-Type: multipart/x-mixed-replace; boundary=frame\r\n"
+                "\r\n");
+
+  // client.println("HTTP/1.1 200 OK");
+  // client.println("Content-Type: multipart/x-mixed-replace; boundary=frame");
+  // client.println();
+
+  while (client.connected())
+  {
+    camera_fb_t *fb = esp_camera_fb_get();
+    if (!fb)
+      continue;
+
+    client.printf("--frame\r\n"
+                  "Content-Type: image/jpeg\r\n"
+                  "Content-Length: %d\r\n\r\n",
+                  (unsigned int)fb->len);
+    client.write(fb->buf, fb->len);
+    client.printf("\r\n");
+
+    esp_camera_fb_return(fb);
+
+    delay(30); // FPS ~ 30
+  }
+
+  Serial.println("MJPEG Stream disconnected!");
+}
 
 /* ===== SETUP ===== */
 void setup()
@@ -162,16 +168,20 @@ void setup()
   Serial.print(WiFi.localIP());
   Serial.println(":80/capture");
 
-  // streamServer.begin();
+  streamServer.begin();
 
-  // Serial.print("MJPEG Stream: http://");
-  // Serial.print(WiFi.localIP());
-  // Serial.println(":81/stream");
+  Serial.print("MJPEG Stream: http://");
+  Serial.print(WiFi.localIP());
+  Serial.println(":81/stream");
+
+  pinMode(33, OUTPUT);
+  pinMode(4, OUTPUT);
+  digitalWrite(33, LOW);
 }
 
 /* ===== LOOP ===== */
 void loop()
 {
   server.handleClient();
-  // streamTask();
+  streamTask();
 }
