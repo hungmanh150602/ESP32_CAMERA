@@ -3,8 +3,8 @@
 #include "esp_camera.h"
 
 /* ==== WIFI ==== */
-const char *ssid = "Manh Hung";
-const char *password = "a12345678";
+const char *ssid = "THEGIOIBAOLA.";
+const char *password = "thegioibaola";
 // const char *ssid = "Xiaomi 17T";
 // const char *password = "44448888";
 
